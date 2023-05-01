@@ -46,5 +46,5 @@ import xgboost as xgb
 ```
 ### Resultados:
 
-Al momento de realizar el método con SMOTE se obtuvieron mejores resultados, donde el mejor modelo de predicción fue el de Regresión Logística con un nivel de precisión del 47.36 %
+Al momento de realizar el método con SMOTE se obtuvieron mejores resultados, donde el mejor modelo de predicción fue el de Regresión Logística con un nivel de precisión del 72%
 
