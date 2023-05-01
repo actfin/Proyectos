@@ -1,0 +1,1055 @@
+---
+documentclass: book
+classoption: a4paper,oneside
+title: "UNIVERSIDAD AUTÓNOMA DE NUEVO LEÓN | FACULTAD DE CIENCIAS FÍSICO MATEMÁTICAS"
+subtitle: "MAESTRÍA EN CIENCIA DE DATOS | METODOS ESTADÍSTICOS BÁSICOS | MET. ALEJANDRA GUADALUPE CERDA RUIZ"
+author: "ACT. ERICK ADRIÁN GARZA TAMEZ | 1812629"
+date: "San Nicolas de los Garza a 4 de Diciembre de 2022"
+output: pdf_document
+fontzise: 12pt
+geometry: margin = 2.5cm
+lang: es
+linkcolor: blue
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(printr)
+library(readxl)
+library(dplyr)
+library(agricolae)
+library(car)
+library(psych)
+library(MASS)
+library(lmtest)
+library(orcutt)
+library(fitdistrplus)
+```
+
+# Introducción
+
+A lo largo de este documento se mostrarán estudios estadísticos para conocer como influyen diversos indicadores económicos en el precio de cotización de la acción de Apple. Las variables que nos interesan saber si influyen sobre esta son por ejemplo la inflación en Estados Unidos, su volumen operado, el precio del dólar en pesos mexicanos y la cotización de los índices S&P 500 y el Dow Jones, los cuales son los principales indicadores económicos que repercuten en la sociedad.
+
+Para fines prácticos de este proyecto los datos a utilizar serán tomados del 04 de octubre de 2021 hasta el 30 de septiembre de 2022, teniendo un total de 251 registros para su posterior estudio. Estos datos fueron obtenidos en el sitio oficial de Yahoo Finance el cual se anexa cada uno de los links en la bibliografía del reporte.
+
+## Descripción de las Variables
+
+Para este reporte se utilizará la variable de respuesta (variable de interés) la cual sigue el **precio de la cotización de la acción de Apple** con una denominación en dólares. Esta es una variable continua y sigue una escala de intervalo.
+
+Dicho esto, nos interesa saber como influyen nuestras variables predictivas (variables independientes) en nuestra variable de respuesta. Para esto nos concentramos en 4 indicadores económicos importantes de Estados Unidos y el volumen diario operado de la acción, esto para afirmar si estas variables realmente influyen en el precio de la acción de Apple.
+
+Nuestras variables predictivas son las siguientes:
+
+- **Volumen Operado en Millones de Dólares**: Esta variable representa el volumen diario que se opera en el transcurso del día de la acción de Apple. Esta es una variable continua y sigue una escala de intervalo.
+
+- **S&P 500**: Este es el índice  Standard & Poor's 500, también conocido como S&P 500, es uno de los índices bursátiles más importantes de Estados Unidos. Al S&P 500 se lo considera el índice más representativo de la situación real del mercado. Esto se debe principalmente a que contiene a las 500 empresas más importantes de Estados Unidos, por lo que su movimiento da a conocer de manera general la situación actual de la economía estadounidense y global. Esta es una variable continua y sigue una escala de intervalo.
+
+- **Inflación en Estados Unidos**: Esta variable índica el nivel de inflación en Estados Unidos, la inflación es el aumento sostenido y generalizado de los precios, de los bienes y servicios de una economía a lo largo del tiempo. Esta variable nos podría indicar que tanto poder adquisitivo se contaba en cada uno de los días de la cotización de Apple. Por teoría se podría decir que a mayor inflación esperas que haya disminución en el volumen operado e incluso un decremento en el precio de la acción. Esta es una variable continua y sigue una escala de intervalo.
+
+- **Dow Jones Industrial (DJI)**: El Dow Jones Industrial Average mide el desempeño de las 30 mayores empresas que cotizan en el mercado bursátil de Estados Unidos. Al igual que el S&P 500 este es un índice que refleja la salud financiera del mercado estadounidense. Esta variable es continua y sigue una escala de intervalo.
+
+- **Precio del Dólar**: Esta variable es considerada para medir la variación entre el precio del dólar en pesos mexicanos y ver si influye directamente en el precio de la acción de Apple. ¿Podríamos afirmar que si aumenta el precio del dólar también aumenta el precio de la acción? Este tipo de preguntas son las que nos interesan conocer y desarrollar durante el proyecto. Esta es una variable continua y tiene una escala de intervalo.
+
+A continuación se mostrará la cabecera y la cola de los datos a trabajar:
+
+```{r echo=FALSE}
+
+data <- read_xlsx("/Volumes/ERICK SSD/Maestría/1 TETRA/METODOS ESTADISTICOS/PIA/Reporte1.xlsx",
+          sheet = 1)
+head(data)
+tail(data)
+```
+
+## Alcances y Problemáticas a Resolver
+
+El planteamiento va muy orientado a conocer el verdadero impacto que tienen las variables antes descritas sobre el precio de la acción de Apple. Algunas de las preguntas que nos gustaría resolver son las siguientes: 
+
+- Si aumenta el S&P 500, ¿cómo se ve afecta la acción de Apple?
+
+- En un escenario de alta inflación, ¿la acción de Apple sufre decrementos?
+
+- Con una cotización "cara" del precio del dólar, ¿aumenta el precio de la acción de Apple?
+
+En sí, nos queremos enfocar a la resolución de escenarios atípicos como los que hemos vivido en los últimos años, logrando así un entendimiento más profundo sobre el desarrollo de la compañía en este tipo de circunstancias.
+
+# Análisis Estadístico
+
+Para dar resolución a lo antes mencionado se trabajarán los datos y se aplicará un análisis estadístico en ellos los cuales incluyen un análisis exploratorio de los datos, regresión lineal múltiple, pruebas de bondad de ajuste y pruebas de hipótesis. En cada uno de estos procesos se espera ir conociendo con mayor profundidad las variables para poder llegar a conclusiones concretas sobre las problemáticas antes propuestas. Para realizar este análisis nos apoyaremos de la herramienta **"R Studio"**.
+
+## Análisis Exploratorio de los Datos
+
+Para este apartado se realizará el análisis descriptivo tanto para las variables predictivas como la variable de respuesta, incluyendo tablas de frecuencias y gráficas tales como histogramas y boxplot.
+
+### Variable de Respuesta
+
+Para conocer un poco mejor nuestra variable de respuesta es necesario conocer su tabla de frecuencias la cual nos indica su valor mínimo y máximo, como también la dispersión de sus datos respecto a la media y asimilar a que tipo de distribución se parecen sus datos.
+
+A continuación se muestra la tabla de frecuencias del Precio de la Acción de Apple:
+
+```{r echo=FALSE}
+
+data$Fecha <- NULL
+
+histap <- hist(data$Apple, plot = F)
+
+tabla1 <- table.freq(histap); tabla1
+
+
+```
+
+De lo anterior podemos observar que nuestro nivel más bajo es 130 y el máximo es de 185 dólares por acción. Para ver estos datos de una manera más sencilla realizaremos un histograma y un gráfico de Boxplot.
+
+```{r echo=FALSE, out.width='45%',fig.show='hold',fig.align='center', fig.cap="Histograma y Boxplot Precio Acción de Apple"}
+
+hist(data$Apple, plot = TRUE,
+              main = "Histograma Variable Respuesta",
+              xlim = c(130,190),
+              ylim = c(0,40),
+              xlab = "Precio de Acción de Apple",
+              ylab = "Frecuencia",
+              col = "#FF4040")
+
+boxplot(data$Apple, main = "Boxplot Variable Respuesta",
+        boxcol = "black",
+        boxfill = "#EE3B3B")
+```
+-
+
+-
+
+-
+
+-
+
+-  
+  
+  
+Con la información mostrada en las figuras anteriores podemos identificar a manera sospechosa que nuestros datos tienden a comportarse de una manera **Lognormal**. Esto mismo por la propia naturaleza de los datos, ya que consisten en el precio de una acción del mercado bursátil. También podemos observar que la mayoría de los datos se concentran en los niveles entre 145 y 170 dólares por acción. 
+
+A continuación anexamos la distribución de datos a manera lognormal:
+
+![Distribución Lognormal](lognormal.jpg)
+
+### Variable Predictiva Volumen Operado
+
+A continuación se muestra la tabla de frecuencias del Volumen Operado en Millones de Dólares:
+
+```{r echo=FALSE}
+
+histvol <- hist(data$volumen_en_millones, plot = F)
+
+tabla2 <- table.freq(histvol); tabla2
+
+
+```
+
+De lo anterior podemos observar que el volumen más bajo operado en un día es de 40 millones de dólares y el máximo es de 200 millones de dólares. Para ver estos datos de una manera más sencilla realizaremos un histograma y un gráfico de Boxplot.
+
+```{r echo=FALSE, out.width='45%',fig.show='hold',fig.align='center', fig.cap="Histograma y Boxplot Volumen Operado"}
+
+hist(data$volumen_en_millones, plot = TRUE,
+              main = "Histograma Volumen Operado",
+              xlim = c(0,200),
+              ylim = c(0,100),
+              xlab = "Volumen Operado en Millones de Dólares",
+              ylab = "Frecuencia",
+              col = "#FFD700")
+
+boxplot(data$volumen_en_millones, main = "Boxplot Volumen Operado",
+        boxcol = "black",
+        boxfill = "#EEC900")
+```
+
+Con la información mostrada en las figuras anteriores podemos identificar a manera sospechosa que nuestros datos tienden a comportarse de una manera **Lognormal** la cual podemos ver su distribución en la figura 2. Aunado a esto, podemos detectar datos atípicos que tienden a acercarse hasta los 200 millones de dólares. También podemos observar que la mayoría de los datos se concentran en los niveles entre 60 y 100 millones de dólares operados por día. 
+
+### Variable Predictiva S&P 500
+
+A continuación se muestra la tabla de frecuencias del S&P 500:
+
+```{r echo=FALSE}
+
+histsp <- hist(data$SP500, plot = F)
+
+tabla3 <- table.freq(histsp); tabla3
+
+
+```
+
+De lo anterior podemos observar que la cotización mas baja se encuentra en los niveles de 350 puntos y el máximo a niveles de 480 puntos. Para ver estos datos de una manera más sencilla realizaremos un histograma y un gráfico de Boxplot.
+
+```{r echo=FALSE, out.width='45%',fig.show='hold',fig.align='center', fig.cap="Histograma y Boxplot SP 500"}
+
+hist(data$SP500, plot = TRUE,
+              main = "Histograma S&P 500",
+              xlim = c(340,480),
+              ylim = c(0,35),
+              xlab = "S&P 500",
+              ylab = "Frecuencia",
+              col = "#FFD700")
+
+boxplot(data$SP500, main = "Boxplot S&P 500",
+        boxcol = "black",
+        boxfill = "#EEC900")
+```
+-
+
+-
+
+-
+
+-
+
+Con la información mostrada en las figuras anteriores podemos identificar a manera sospechosa que nuestros datos tienden a comportarse de una manera **Lognormal** la cual podemos ver su distribución en la figura 2. A su vez, podemos detectar que los datos parecen demostrar una inclinación hacia la derecha del histograma, lo que nos puede indicar que se concentra la mayor parte de datos a niveles superiores de 400 puntos del S&P 500, lo cual lo podemos confirmar con nuestro Boxlpot.
+
+### Variable Predictiva Inflación en Estados Unidos
+
+A continuación se muestra la tabla de frecuencias de la inflación en Estados Unidos:
+
+```{r echo=FALSE}
+
+histin <- hist(data$inflacion_usa, plot = F)
+
+tabla4 <- table.freq(histin); tabla4
+
+
+```
+
+De lo anterior podemos observar que el nivel mas bajo de inflación se encuentra en niveles de 6% y el máximo en niveles de 9.5% anual. Para ver estos datos de una manera más sencilla realizaremos un histograma y un gráfico de Boxplot.
+
+```{r echo=FALSE, out.width='45%',fig.show='hold',fig.align='center', fig.cap="Histograma y Boxplot Inflación Estados Unidos"}
+
+hist(data$inflacion_usa, plot = TRUE,
+              main = "Histograma Inflación Estados Unidos",
+              xlim = c(6,9.5),
+              ylim = c(0,120),
+              xlab = "Inflación en Estados Unidos",
+              ylab = "Frecuencia",
+              col = "#FFD700")
+
+boxplot(data$inflacion_usa, main = "Boxplot Inflación Estados Unidos",
+        boxcol = "black",
+        boxfill = "#EEC900")
+```
+
+Con la información mostrada en las figuras anteriores podemos identificar a manera sospechosa que nuestros datos tienden a comportarse de una manera **Uniforme** con datos atípicos entre el 8.0% y 8.05% de inflación. A su vez, podemos detectar que los datos parecen demostrar una relación en sus frecuencias a niveles entre 0 y 20 ocurrencias en la mayoría de los niveles.
+
+A continuación anexamos la distribución de datos a manera uniforme:  
+![Distribución Uniforme](uniforme.jpg)  
+Figura 2.1: Distribución Uniforme
+
+### Variable Predictiva Dow Jones Industrial.
+
+A continuación se muestra la tabla de frecuencias del DJI:
+
+```{r echo=FALSE}
+
+histdw <- hist(data$DJI, plot = F)
+
+tabla4 <- table.freq(histdw); tabla4
+
+
+```
+
+De lo anterior podemos observar que el nivel más bajo se suitó a 28,000 puntos y el nivel máximo registrado se encontro a niveles de 37,000 puntos. Para ver estos datos de una manera más sencilla realizaremos un histograma y un gráfico de Boxplot.
+
+```{r echo=FALSE, out.width='45%',fig.show='hold',fig.align='center', fig.cap="Histograma y Boxplot DJI"}
+
+hist(data$DJI, plot = TRUE,
+              main = "Histograma DJI",
+              xlim = c(28000,38000),
+              ylim = c(0,60),
+              xlab = "Dow Jones Industrial",
+              ylab = "Frecuencia",
+              col = "#FFD700")
+
+boxplot(data$DJI, main = "Boxplot DJI",
+        boxcol = "black",
+        boxfill = "#EEC900")
+```
+
+Con la información mostrada en las figuras anteriores podemos identificar a manera sospechosa que nuestros datos tienden a comportarse de una manera **Lognormal** la cual podemos ver su distribución en la figura 2. A su vez, podemos detectar que los datos parecen demostrar una inclinación hacia la derecha del histograma, especificamente en nivles entre 32,000 y 35,000 puntos, lo cual lo podemos confirmar con nuestro Boxlpot.
+
+### Variable Predictiva Precio Dólar.
+
+A continuación se muestra la tabla de frecuencias del Precio del Dólar:
+
+```{r echo=FALSE}
+
+histpd <- hist(data$precio_dolar, plot = F)
+
+tabla5 <- table.freq(histpd); tabla5
+
+
+```
+
+De lo anterior podemos observar que el nivel más bajo en el costo del dólar se encontró a 19.4 y el máximo a 21.8 pesos mexicanos. Para ver estos datos de una manera más sencilla realizaremos un histograma y un gráfico de Boxplot.
+
+```{r echo=FALSE, out.width='45%',fig.show='hold',fig.align='center', fig.cap="Histograma y Boxplot Precio Dólar"}
+
+hist(data$precio_dolar, plot = TRUE,
+              main = "Histograma Precio Dólar",
+              xlim = c(19,22),
+              ylim = c(0,60),
+              xlab = "Precio Dólar en MXN",
+              ylab = "Frecuencia",
+              col = "#FFD700")
+
+boxplot(data$precio_dolar, main = "Boxplot Precio Dólar",
+        boxcol = "black",
+        boxfill = "#EEC900")
+```
+
+Con la información mostrada en las figuras anteriores podemos identificar a manera sospechosa que nuestros datos tienden a comportarse de una manera **Lognormal** la cual podemos ver su distribución en la figura 2. Complementado lo anterior, los datos tienden parecer que siguen una distribución normal pero por la naturaleza de los mismos (precios) y dado a que tiene caídas atípicas en sus frecuencias, optaremos seguir el supuesto que se distribuyen lognormal para posteriormente demostralo en el proyecto.
+
+## Análisis de Regresión Lineal Múltiple
+
+### Análisis Descriptivo y Multicolinealidad
+
+Para realizar exitosamente una regresión lineal múltiple es necesario conocer primero los valores de correlación entre las variables y así poder plantear en sospecha que variables pueden realmente estar involucradas en el modelo.
+
+Para ello, realizaremos nuestra matriz de correlación que se muestra a continuación:
+
+```{r echo=FALSE}
+
+round(cor(data),4)
+
+```
+
+De lo anterior podemos concluir lo siguiente:
+
+- Que la correlación entre Apple y el índice S&P 500 es considerable y positiva, lo cual nos indica que si sube el mercado, Apple tiende a también subir.
+
+- En cambio al S&P 500, el índice Dow Jones tiene una correlación negativa respecto al precio de la acción de Apple, significando que si sube el precio en la cotización de la acción de Apple el índice tendrá una tendencia negativa.
+
+- Que el precio del dólar tiende a bajar cuando sube la inflación en Estados Unidos.
+
+- Que el volumen operado en la acción de Apple no está relacionada con el precio de su cotización, esto dado que la correlación entre ambas es de 0.031.
+
+- Que la inflación en Estados Unidos. y el índice Dow Jones tienen una correlación fuerte y positiva,
+lo cual indica que un alza o baja repercute de casi igual forma en ambas.
+
+Para reforzar lo planteado anteriormente, se agregará una matriz de dispersión y así confirmar los puntos establecidos.  
+
+```{r echo=FALSE, fig.cap="Matriz de Dispersión", out.width='80%', fig.align='center'}
+
+pairs.panels(data,
+             method = "pearson",
+             hist.col = "#FFD700",
+             density = T,
+             main = "Matriz de Dispersión",
+             pch = ".")
+
+```
+
+De lo anterior podemos concluir lo siguiente:
+
+- Que parece haber una relación lineal con la cotización de la acción de Apple y el índice S&P 500. Esto dado a que vemos una tendencia fuerte y positiva. Esto lo podemos confirmar también por su nivel de correlación el cual se encuentra en un nivel del 64%.
+
+- Que la mayor parte del volumen operado se encontró en niveles entre 20.00 y 20.55 pesos mexicanos el dólar. Esto nos puede indicar que fue de más facil acceso operar la acción en estos niveles del dólar.
+
+- Que la cotización del S&P 500 tiene bajas considerables con la inflación de Estados Unidos a niveles superiores al 8.5%. Esto se debe principalmente a los fuertes movimientos del mercado, cada vez que sube la inflación tiene una repercución negativa en los mercados bursátiles, en este caso en particular su correlación es de -70%.
+
+- Que por el contrario al S&P 500 el índice Dow Jones se fortaleció a niveles de inflación mayores al 8.5%.
+
+- A su vez, que el precio del dólar disminuyó considerablemente con una inflación mayor. Esto es normal en el mercado ya que los bancos centrales empiezan a subir la tasa de referencia, provocando que los inversionistas extranjeros tengan apetito por la adquisición de pesos mexicanos, disminuyendo la demanda del dolar y aumentando la del peso mexicano.
+
+Al momento con la información obtenida, parece ser que todas nuestras variables impactan en el precio de la cotización de Apple, sin embargo podríamos decir que la única que no mantiene una posición fuerte dada su correlación es el volumen operado, no obstante, no se descartará dado que en la práctica si influye de manera significativa dado que si no hay corro de compra o venta se puede generar problema de oferta-demanda, ocasionando movimientos en su precio.
+
+Dando seguimiento al modelo de regresión lineal múltiple, nos interesa revisar si el mismo tiene problemas de multicolinealidad. La multicolinealidad es la correlación alta entre 2 o más variables predictivas, es decir, que nuestras variables independientes (predictivas) no se correlacionen una con la otra.
+
+A partir de este supuesto tomaremos los siguientes puntos para revisar si nuestro modelo presenta problemas de multicolinealidad:
+
+$VIF = 1$ Significa que no existe correlación entre esta variable independiente y cualquier otra.
+
+$1<VIF<5$ Sugiere una correlación moderada pero no sería necesario resolverla.
+
+$VIF>5$ Son niveles críticos de multicolinealidad.
+
+Dicho esto, realizaremos la prueba para revisar que efectivamente nuestro modelo no presente problemas de multicolinealidad en sus datos.
+
+La prueba nos arrojó los siguientes resultados:
+
+```{r echo=FALSE}
+
+reg <- lm(data$Apple~data$volumen_en_millones+data$SP500+data$inflacion_usa+
+            data$DJI+ data$precio_dolar)
+vifs <- as.data.frame(vif(reg))
+tvifs <- data.frame(t(vifs))
+colnames(tvifs) <- c("Volumen Operado", "S&P 500", "Inflación", "DJI", "Precio Dólar")
+rownames(tvifs) <- c("VIF")
+tvifs
+
+```
+
+Tomando los criterios descritos y los valores obtenidos en la prueba podemos concluir que nuestro modelo **no corre con problemas de multicolinealidad**.
+
+### Pruebas de Significancia y Ajustes del Modelo Actual
+
+Dada la información anterior, es necesario plantear nuestras pruebas de significancia del modelo de regresión lineal múltiple para medir la bondad de ajuste del modelo. Esta prueba determina si existe una relación lineal entre la variable respuesta $Y$ y alguna de las variables regresoras $X_1,X_2,X_3,X_4,X_5$. La hipótesis del modelo es la siguiente:
+
+$$H_0: B_1=B_2=...B_5=0$$
+$$H_a: B_j \neq 0\to j; 1, 2, ... 5.$$
+
+Al rechazar la hipótesis nula se concluye que al menos una de las variables regresoras contribuye significativamente al modelo. De no ser así, no podríamos afirmar que al menos una de nuestras variables influye en el modelo.
+
+Dicho esto, la prueba nos arrojó los siguientes resultados:
+
+```{r echo=FALSE}
+
+summary(reg)
+
+```
+
+Ahora bien, para conocer si rechazamos nuestra hipótesis nula es necesario que nuestro **$valor.p$** sea menor que **$\alpha$**. Por lo que desarrollamos lo siguiente:
+
+$$valor.p < \alpha$$
+$$2.2e^{-16}<0.05$$
+
+Dado a que efectivamente nuestro $valor.p$ es menor que $\alpha$ podemos afirmar con un nivel del 95% de confianza que **al menos una de las variables regresoras contribuye significativamente al modelo**. Por otra parte, podemos destacar que nuestro modelo aparte de ser significativo cumple con un desempeño del **61.38%**.
+
+Continuando con el análisis es necesario conocer y plantear la ecuación del modelo. Para ello tomaremos los datos de la prueba realizada en el punto anterior. La ecuación planteada para el modelo que incluye todas las variables es la siguiente:
+
+$$\hat{y} = 0.02131X_1 + 0.4088X_2 + 9.666X_3 - 0.0001016X_4 + 3.293X_5 -158.6$$
+
+Dada la ecuación del modelo podemos decir que todas las variables influyen positivamente en nuestra variable de respuesta a excepción de la variable del índice Dow Jones la cual se ve con una repercusión negativa sobre la función. Esto también hace concordancia con la matriz de correlación de nuestros datos.
+
+### Regresiones Posibles y Mejor Modelo
+
+Anteriormente pudimos observar que nuestro modelo que contempla todas nuestras variables predictivas cumple con la significancia de que al menos una de las variables influye en nuestro modelo y tuvo un desempeño por encima del 60%, sin embargo no podemos afirmar que este sea el mejor modelo a trabajar, es por ello que se realizarán las pruebas para todos los modelos con 4, 3, 2 y 1 variable para conocer puntualmente cuál de ellos presentan un mejor desempeño y una mayor significancia dentro del mismo.
+
+Para este análisis se contemplaron las variables predictivas en el siguiente orden; Volumen Operado(1), S&P 500(2), Inflación en Estados Unidos(3), Dow Jones(4) y el Precio del Dólar(5). Las pruebas nos arrojaron los siguientes resultados:
+
+```{r echo=FALSE}
+
+modelos <- read_xlsx("/Volumes/ERICK SSD/Maestría/1 TETRA/METODOS ESTADISTICOS/PIA/Reporte1.xlsx",
+          sheet = 2)
+
+modelos
+
+```
+
+De lo anterior pudimos observar que el modelo que presenta un mejor desempeño es el que incluye las variables predictivas del **Volumen Operado, S&P 500, Inflación en Estados Unidos y el Precio del Dólar**. La variable predictiva del Dow Jones **será retirada del modelo** para así tener un mejor desempeño en el modelo de regresión lineal múltiple. Este nuevo modelo presenta un desempeño del **61.53%** vs **61.38%** por lo que pretende tener una mejor estimación.
+
+Dicho esto, se realizará de nuevo las pruebas de significancia y el ajuste del nuevo modelo a utilizar.
+
+### Prueba de Significancia y Ajuste del Modelo 2
+
+La prueba de significancia del nuevo modelo de regresión lineal múltiple sirve para medir la bondad de ajuste del mismo. Esta prueba determina si existe una relación lineal entre la variable respuesta $Y$ y alguna de las variables regresoras $X_1,X_2,X_3,X_5$. La hipótesis del modelo es la siguiente:
+
+$$H_0: B_1=B_2=B_3=B_5=0$$
+$$H_a: B_j \neq 0\to j; 1, 2,3,5.$$
+
+Al rechazar la hipótesis nula se concluye que al menos una de las variables regresoras contribuye significativamente al modelo.
+
+Dicho esto, la prueba nos arrojó los siguientes resultados:
+
+```{r echo=FALSE}
+reg2 <- lm(data$Apple~data$volumen_en_millones+data$SP500+data$inflacion_usa+data$precio_dolar)
+summary(reg2)
+
+```
+
+Al igual que en modelo pasado, necesitamos conocer si rechazamos nuestra hipótesis nula por lo que es necesario que nuestro **$valor.p$** sea menor que **$\alpha$**. Por lo que desarrollamos lo siguiente:
+
+$$valor.p < \alpha$$
+$$2.2e^{-16}<0.05$$
+
+Dado a que efectivamente nuestro $valor.p$ es menor que $\alpha$ podemos afirmar con un nivel del 95% de confianza que **al menos una de las variables regresoras contribuye significativamente al modelo**. Por otra parte, podemos destacar que nuestro modelo aparte de ser significativo cumple con un desempeño del **61.53%**.
+
+A su vez es necesario conocer y plantear la ecuación del modelo. Para ello tomaremos los datos de la prueba realizada en el punto anterior. La ecuación planteada para el modelo final que incluye las variables de **Volumen Operado, S&P 500, Inflación en Estados Unidos y el Precio del Dólar** es la siguiente:
+
+$$\hat{y} = 0.02258X_1 + 0.41064X_2 + 9.52203X_3 + 3.24684X_5 -160.82063$$
+
+Con la nueva ecuación del modelo podemos concluir que todas nuestras variables impactan de manera positiva a nuestro modelo, en cambio al modelo anterior, el Dow Jones impactaba de manera negativa. Por otro lado vemos que la inflación en Estados Unidos toma un gran papel en el precio de la acción de Apple como también el precio del dólar. Llevado a la práctica esto puede resultar fiable dado que la inflación impacta directamente a los mercados bursátiles, esto principalmente porque el poder adquisitivo del mercado disminuye y buscan mejores alternativas para conservar el valor de su dinero.
+
+### Intervalos de Confianza del Modelo 2
+
+Ya que tenemos nuestra ecuación del modelo es importante revisar si este presenta pruebas de tener una **regresión al origen**.
+
+Para ello es necesario conocer nuestros intervalos de confianza los cuales se muestras a continuación:
+
+```{r echo=FALSE}
+conf <- as.data.frame(confint(reg2))
+tconf <- data.frame(t(conf))
+colnames(tconf) <- c("Intercept","Volumen Operado", "S&P 500", "Inflación", "Precio Dólar")
+rownames(tconf) <- c("2.5%", "97.5%")
+tconf
+
+```
+
+De lo anterior podemos concluir que nuestro modelo **no presenta evidencia alguna de tener regresión al origen**, esto dado que nuestros valores van desde -223.22 al -98.41 por lo cual no tiene un punto donde pase por el 0.
+
+### Supuestos de los Residuos
+
+Para validar que nuestro modelo realmente es funcional es importante revisar el cumplimiento de los supuestos de los residuos. Estos constan de 3 puntos:
+
+- El término del error tiene varianza constante.
+
+- El término del error tiene $media = 0$ y cumplen con una distribución normal
+
+- Los errores son independientes
+
+Revisando los puntos anteriores se realizaron las siguientes pruebas:
+
+#### Prueba de Normalidad y Media = 0
+
+Para ver el cumplimiento de este supuesto donde buscamos que el termino del error sigan una distribución normal y que su media sea igual a 0 es necesario plantear la siguiente prueba de hipótesis:
+
+$$H_0: Residuales.Distribucion.Normal/Media=0$$
+$$H_a: Los.datos.provienen.de.otra.distribución$$
+
+La prueba arrojó los siguientes resultados:
+
+```{r echo=FALSE, include=FALSE}
+res <- residuals(reg2)
+anova(reg2)
+```
+
+```{r echo=FALSE}
+ks.test(res, pnorm, mean = 0, sd= sqrt(58.6))
+
+```
+
+Para interpretar esta prueba y poder llegar a una conclusión tenemos que comprobar los niveles de nuestro $valor.p$ contra nuestro valor de $\alpha$.
+
+$$valor.p<\alpha$$
+$$0.0629>0.05$$
+Dado que nuestro $valor.p$ es mayor que nuestro valor de $\alpha$ **no rechazamos H0** y podemos afirmar con un nivel del 95% de confianza que **los residuales provienen de una distribución normal y tienen media igual a 0**.
+
+#### Prueba de Varianza Constante
+
+Para buscar que el termino del error tenga varianza constante necesitamos analizar el gráfico de dispersión de los valores ajustados vs los residuales. Para ello se anexa la siguiente figura:
+
+```{r echo=FALSE, out.width='80%',fig.align='center',fig.cap="Dispersión de Valores Ajustados VS Residuales"}
+
+plot(fitted.values(reg2),
+     res,
+     col = "red",
+     pch = 20,
+     main = "Valores Ajustados VS Residuales",
+     xlab = "Valores Ajustados",
+     ylab = "Residuales")
+
+```
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+Analizando el gráfico anterior podemos observar que los datos no presentan ningún patrón en la dispersión de los mismos, por lo tanto, **podemos afirmar que la regresión sigue una varianza constante**.
+
+#### Supesto de Independencia
+
+Para finalizar el análisis del cumplimiento de los supuestos de los residuos es necesario comprobar que los errores son indpendientes y no se relacionan unos con los otros. Para ello tenemos que plantear la siguiente prueba de hipótesis:
+
+$$H_0: Residuales.Independientes$$
+$$H_a: Residuales.Dependientes$$
+
+La prueba arrojó los siguientes resultados:
+
+```{r echo=FALSE}
+
+Box.test(res)
+
+```
+
+Para interpretar esta prueba y poder llegar a una conclusión tenemos que comprobar los niveles de nuestro $valor.p$ contra nuestro valor de $\alpha$.
+
+$$valor.p<\alpha$$
+$$2.2e^{-16}<0.05$$
+
+Dado que nuestro $valor.p$ es menor que nuestro valor de $\alpha$ **rechazamos H0** y podemos afirmar con un nivel del 95% de confianza que **los residuales son dependientes**.
+
+Dado que uno de nuestros supuestos resulto ser rechazado, tenemos que aplicar una transformación a nuestros datos.
+
+### Corrección de la Autocorrelación de 1er Orden Cochrane Orcutt
+
+Si se comprueba a través del estadístico de Durbin-Watson que el término de error está serialmente correlacionado con el tiempo, entonces la inferencia estadística estándar tal como se aplica normalmente a regresiones no es válida porque los errores estándar se estimaron con sesgo. Para evitar este problema, los residuos deben ser modelados. Si se encuentra que el proceso de generación de los residuos es un proceso estacionario de primer orden con estructura autorregresiva, con los errores siendo ruido blanco, el procedimiento de Cochrane-Orcutt puede ser utilizado para transformar el modelo
+
+Dando seguimiento, se realizará primero la prueba de hipótesis a tráves del estádistico de Durbin-Watson para comprobar la autocorrelación de nuestros datos, la cual se muestra a continuación:
+
+$$H_0: Independencia$$
+$$H_a: Autocorrelación$$
+
+La prueba Durbin-Watson nos arrojó los siguientes resultados:
+
+```{r echo=FALSE}
+
+dwtest(reg2, alternative = "two.sided")
+
+```
+
+Para interpretar esta prueba y poder llegar a una conclusión tenemos que comprobar los niveles de nuestro $valor.p$ contra nuestro valor de $\alpha$.
+
+$$valor.p<\alpha$$
+$$2.2e^{-16}<0.05$$
+
+Dado a que **rechazamos HO** podemos concluir que con un nivel del 95% de confianza que nuestros datos tienen autocorrelación y podremos aplicar el metodo de la corrección de la autocorrelación de 1er orden de Cochrane Orcutt.
+
+Ahora bien para realizar esta prueba es necesario plantear nuestra prueba de hipótesis:
+
+$$H_0: Independencia$$
+$$H_a: Autocorrelación$$
+
+El modelo de corrección de Cochrane Orcutt nos arrojó los siguientes resultados:
+
+```{r echo=FALSE}
+reg3 <- cochrane.orcutt(reg2)
+summary(reg3)
+
+```
+
+Para interpretar esta prueba y poder llegar a una conclusión tenemos que comprobar los niveles de nuestro $valor.p$ contra nuestro valor de $\alpha$.
+
+$$valor.p<\alpha$$
+$$0.0705>0.05$$
+
+Dado a que **no rechazamos HO** podemos concluir que con un nivel del 95% de confianza que nuestros residuos son independientes.
+
+### Prueba de Significancia y Ajuste del Modelo Final
+
+Esta prueba determina si existe una relación lineal entre la variable respuesta $Y$ y alguna de las variables regresoras $X_1,X_2,X_3,X_5$ con el nuevo modelo corregido. La hipótesis del modelo es la siguiente:
+
+$$H_0: B_1=B_2=B_3=B_5=0$$
+$$H_a: B_j \neq 0\to j; 1, 2,3,5.$$
+
+Al rechazar la hipótesis nula se concluye que al menos una de las variables regresoras contribuye significativamente al modelo.
+
+Dicho esto, la prueba nos arrojó los siguientes resultados:
+
+```{r echo=FALSE}
+summary(reg3)
+
+```
+
+Al igual que en modelo pasado, necesitamos conocer si rechazamos nuestra hipótesis nula por lo que es necesario que nuestro **$valor.p$** sea menor que **$\alpha$**. Por lo que desarrollamos lo siguiente:
+
+$$valor.p < \alpha$$
+$$2.304e^{-67}<0.05$$
+
+Dado a que efectivamente nuestro $valor.p$ es menor que $\alpha$ podemos afirmar con un nivel del 95% de confianza que **al menos una de las variables regresoras contribuye significativamente al modelo**. Por otra parte, podemos destacar que nuestro modelo aparte de ser significativo cumple con un desempeño del **72%**.
+
+A su vez es necesario conocer y plantear la ecuación del modelo. Para ello tomaremos los datos de la prueba realizada en el punto anterior. La ecuación planteada para el modelo final que incluye las variables de **Volumen Operado, S&P 500, Inflación en Estados Unidos y el Precio del Dólar** es la siguiente:
+
+$$\hat{y} = 0.0100764X_1 + 0.4704695X_2 + 0.6144166X_3 + 0.5018506X_5 -49.8332497$$
+
+Con la nueva ecuación del modelo podemos concluir que todas nuestras variables impactan de manera positiva a nuestro modelo, en cambio al modelo anterior, vemos que los valores de nuestras $B_j$ de las variables predictivas disminuyeron, esto se debe precisamente a la correción aplicada.
+
+### Intervalos de Confianza del Modelo Final
+
+Ya que tenemos nuestra ecuación del modelo es importante revisar si este presenta pruebas de tener una **regresión al origen**.
+
+Para ello es necesario conocer nuestros intervalos de confianza los cuales se muestras a continuación:
+
+```{r echo=FALSE}
+
+reg4 <- lm(reg3)
+conf1 <- as.data.frame(confint(reg4))
+tconf1 <- data.frame(t(conf1))
+colnames(tconf1) <- c("Intercept","Volumen Operado", "S&P 500", "Inflación", "Precio Dólar")
+rownames(tconf1) <- c("2.5%", "97.5%")
+tconf1
+
+```
+
+De lo anterior podemos concluir que nuestro modelo **no presenta evidencia alguna de tener regresión al origen**, esto dado que nuestros valores van desde -93.3152 al -6.3512 por lo cual no tiene un punto donde pase por el 0.
+
+## Pruebas de Bondad de Ajuste
+
+Una prueba de bondad de ajuste permite rectificar la hipótesis de que una variable aleatoria sigue cierta distribución de probabilidad y se utiliza en situaciones donde se requiere comparar una distribución observada con una teórica o hipotética, compararla con datos históricos o con la distribución conocida de otra población.
+
+Es por ello que realizaremos una prueba de bondad de ajuste para cada una de las variables a utilizar en nuestra ecuación final del modelo.
+
+### Bondad de Ajuste para el Precio de la Acción de Apple
+
+Para esta variable se planteó en el análisis exploratorio de datos a manera de sospecha que los datos siguen una distribución lognormal. A continuación se muestra nuevamente el histograma del precio de la acción de Apple.
+
+```{r echo=FALSE, out.width='45%',fig.show='hold',fig.align='center', fig.cap="Histograma Precio Acción de Apple y Distribución Lognormal"}
+
+hist(data$Apple, plot = TRUE,
+              main = "Histograma Variable Respuesta",
+              xlim = c(130,190),
+              ylim = c(0,40),
+              xlab = "Precio de Acción de Apple",
+              ylab = "Frecuencia",
+              col = "#FF4040")
+
+x1 <- rlnorm(1000, meanlog=5, sdlog=0.4)
+
+hist(x1,
+    main = "Histograma Lognormal",
+    xlab = "Lognormal",
+    ylab = "Frecuencia",
+    xlim = c(0,800),
+    ylim = c(0,400),
+    col = "gold")
+```
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+Ahora bien, es necesario realizar la estimación de nuestros parámetros para plantear de manera correcta nuestra prueba de hipótesis. Esta prueba se realizará apartir de la **estimación por máxima verosimilitud (MLE)**.
+
+```{r echo=FALSE}
+fitdist(data$Apple,
+        distr = "lnorm",
+        method = "mle",
+        lower = c(0, 0))
+
+```
+
+De lo anterior podemos observar que nuestras estimaciones de los parámetros fueron de $\mu=5.0639$ y $\sigma=0.07844$. Dicho esto, podemos plantear de manera correcta nuestra nuestra hipótesis correspondiente:
+
+$$H_0: Distribución.Lognormal | \mu=5.0639 \wedge \sigma=0.07844$$
+$$H_a:Otra.Distribución $$
+
+Planteada nuestra hipótesis realizaremos nuestra prueba *Kolmogrov Smirnov*:
+
+```{r echo=FALSE}
+ks.test(data$Apple, plnorm, mean = 5.0639, sd = 0.07844)
+```
+
+Por lo tanto, desarrollamos nuestra hipótesis:
+
+$$valor.p < \alpha$$
+$$0.1444>0.05$$
+Dado que **no rechazamos $H_0$** podemos concluir con un nivel del 95% de confianza que nuestros datos **provienen de una distribución lognormal** con parámetros de $\mu=5.0639$ y $\sigma=0.07844$.
+
+### Bondad de Ajuste para el Volumen Operado de la Acción de Apple
+
+Para esta variable se planteó en el análisis exploratorio de datos a manera de sospecha que los datos siguen una distribución lognormal. A continuación se muestra nuevamente el histograma del volumen operado en millones de dólares.
+
+-
+
+```{r echo=FALSE, out.width='45%',fig.show='hold',fig.align='center', fig.cap="Histograma Volumen Operado y Distribución Lognormal"}
+
+hist(data$volumen_en_millones, plot = TRUE,
+              main = "Histograma Volumen Operado",
+              xlim = c(0,200),
+              ylim = c(0,100),
+              xlab = "Volumen Operado en Millones de Dólares",
+              ylab = "Frecuencia",
+              col = "#FF4040")
+hist(x1,
+    main = "Histograma Lognormal",
+    xlab = "Lognormal",
+    ylab = "Frecuencia",
+    xlim = c(0,800),
+    ylim = c(0,400),
+    col = "gold")
+```
+
+Ahora bien, es necesario realizar la estimación de nuestros parámetros para plantear de manera correcta nuestra prueba de hipótesis. Esta prueba se realizará apartir de la **estimación por máxima verosimilitud (MLE)**.
+
+```{r echo=FALSE}
+fitdist(data$volumen_en_millones,
+        distr = "lnorm",
+        method = "mle",
+        lower = c(0, 0))
+
+```
+
+De lo anterior podemos observar que nuestras estimaciones de los parámetros fueron de $\mu=4.45139$ y $\sigma=0.278183$. Dicho esto, podemos plantear de manera correcta nuestra nuestra hipótesis correspondiente:
+
+$$H_0: Distribución.Lognormal | \mu=4.45139 \wedge \sigma=0.2781$$
+$$H_a:Otra.Distribución $$
+
+Planteada nuestra hipótesis realizaremos nuestra prueba *Kolmogrov Smirnov*:
+
+```{r echo=FALSE}
+ks.test(data$volumen_en_millones, plnorm, mean = 4.45139, sd = 0.2781)
+```
+
+Por lo tanto, desarrollamos nuestra hipótesis:
+
+$$valor.p < \alpha$$
+$$0.398>0.05$$
+Dado que **no rechazamos $H_0$** podemos concluir con un nivel del 95% de confianza que nuestros datos **provienen de una distribución lognormal** con parámetros de $\mu=0.398$ y $\sigma=0.2781$.
+
+### Bondad de Ajuste para el S&P 500
+
+Para esta variable se planteó en el análisis exploratorio de datos a manera de sospecha que los datos siguen una distribución lognormal. A continuación se muestra nuevamente el histograma del S&P 500.
+
+```{r echo=FALSE, out.width='45%',fig.show='hold',fig.align='center', fig.cap="Histograma SP 500 y Distribución Lognormal"}
+
+hist(data$SP500, plot = TRUE,
+              main = "Histograma S&P 500",
+              xlim = c(340,480),
+              ylim = c(0,35),
+              xlab = "S&P 500",
+              ylab = "Frecuencia",
+              col = "#FF4040")
+hist(x1,
+    main = "Histograma Lognormal",
+    xlab = "Lognormal",
+    ylab = "Frecuencia",
+    xlim = c(0,800),
+    ylim = c(0,400),
+    col = "gold")
+```
+
+Ahora bien, es necesario realizar la estimación de nuestros parámetros para plantear de manera correcta nuestra prueba de hipótesis. Esta prueba se realizará apartir de la **estimación por máxima verosimilitud (MLE)**.
+
+```{r echo=FALSE}
+fitdist(data$SP500,
+        distr = "lnorm",
+        method = "mle",
+        lower = c(0, 0))
+
+```
+
+De lo anterior podemos observar que nuestras estimaciones de los parámetros fueron de $\mu=6.05583$ y $\sigma=0.073824$. Dicho esto, podemos plantear de manera correcta nuestra nuestra hipótesis correspondiente:
+
+$$H_0: Distribución.Lognormal | \mu=6.05583 \wedge \sigma=0.073824$$
+$$H_a:Otra.Distribución $$
+
+Planteada nuestra hipótesis realizaremos nuestra prueba *Kolmogrov Smirnov*:
+
+```{r echo=FALSE}
+ks.test(data$SP500, plnorm, mean = 6.0558367, sd = 0.0738248)
+```
+
+Por lo tanto, desarrollamos nuestra hipótesis:
+
+$$valor.p < \alpha$$
+$$0.03907<0.05$$
+Dado que **rechazamos $H_0$** podemos concluir con un nivel del 95% de confianza que nuestros datos **provienen de alguna otra distribución**.
+
+### Bondad de Ajuste para la Inflación en Estados Unidos
+
+Para esta variable se planteó en el análisis exploratorio de datos a manera de sospecha que los datos siguen una distribución uniforme. A continuación se muestra nuevamente el histograma de la inflación en Estados Unidos.
+
+```{r echo=FALSE, out.width='45%',fig.show='hold',fig.align='center', fig.cap="Histograma Inflación en Estados Unidos y Distribución Uniforme"}
+
+hist(data$inflacion_usa, plot = TRUE,
+              main = "Histograma Inflación Estados Unidos",
+              xlim = c(6,9.5),
+              ylim = c(0,120),
+              xlab = "Inflación en Estados Unidos",
+              ylab = "Frecuencia",
+              col = "#FF4040")
+
+x2 <- runif(1000,0, 1)
+hist(x2,
+    main = "Histograma Uniforme",
+    xlab = "Uniforme",
+    ylab = "Frecuencia",
+    col = "gold")
+```
+
+Dado que observamos que se presentan datos atípicos en los valores entre el 8.0 y el 8.5 de inflación en Estados Unidos, se optará por quitar estos valores y trabajar sobre un nuevo panorama para analizar su comportamiento de manera correcta.
+
+Quitando estos datos atípicos podemos observar un planteamiento:
+
+```{r echo=FALSE, out.width='45%',fig.show='hold',fig.align='center', fig.cap="Histograma Inflación en Estados Unidos y Distribución Uniforme"}
+
+inflacion <- read_xlsx("/Volumes/ERICK SSD/Maestría/1 TETRA/METODOS ESTADISTICOS/PIA/Reporte1.xlsx",
+          sheet = 3)
+
+hist(inflacion$inflacion_usa, plot = TRUE,
+              main = "Histograma Inflación Estados Unidos",
+              xlim = c(6,9.5),
+              ylim = c(0,120),
+              xlab = "Inflación en Estados Unidos",
+              ylab = "Frecuencia",
+              col = "#FF4040")
+hist(x2,
+    main = "Histograma Uniforme",
+    xlab = "Uniforme",
+    ylab = "Frecuencia",
+    col = "gold")
+
+```
+
+
+Ahora bien, es necesario realizar la estimación de nuestros parámetros para plantear de manera correcta nuestra prueba de hipótesis. Esta prueba se realizará apartir de la **estimación por máxima verosimilitud (MLE)**.
+
+```{r echo=FALSE}
+
+fitdist(inflacion$inflacion_usa,
+        distr = "unif",
+        method = "mle",
+        lower = c(0, 0))
+
+```
+
+De lo anterior podemos observar que nuestras estimaciones de los parámetros fueron de $min=6.2$ y $max=9.1$. Dicho esto, podemos plantear de manera correcta nuestra nuestra hipótesis correspondiente:
+
+$$H_0: Distribución.Uniforme | min=6.2 \wedge max=9.1$$
+$$H_a:Otra.Distribución $$
+
+Planteada nuestra hipótesis realizaremos nuestra prueba *Kolmogrov Smirnov*:
+
+```{r echo=FALSE}
+ks.test(inflacion$inflacion_usa, punif, min = 6.2, max = 9.1)
+```
+
+Por lo tanto, desarrollamos nuestra hipótesis:
+
+$$valor.p < \alpha$$
+$$2.477e^{-5}<0.05$$
+Dado que **rechazamos $H_0$** podemos concluir con un nivel del 95% de confianza que nuestros datos **provienen de alguna otra distribución**.
+
+### Bondad de Ajuste para el Precio del Dólar
+
+Para esta variable se planteó en el análisis exploratorio de datos a manera de sospecha que los datos siguen una distribución lognormal. A continuación se muestra nuevamente el histograma del precio del dólar.
+
+```{r echo=FALSE, out.width='45%',fig.show='hold',fig.align='center', fig.cap="Histograma Precio Dólar y Distribución Lognormal"}
+
+hist(data$precio_dolar, plot = TRUE,
+              main = "Histograma Precio Dólar",
+              xlim = c(19,22),
+              ylim = c(0,60),
+              xlab = "Precio Dólar en MXN",
+              ylab = "Frecuencia",
+              col = "#FF4040")
+hist(x1,
+    main = "Histograma Lognormal",
+    xlab = "Lognormal",
+    ylab = "Frecuencia",
+    xlim = c(0,800),
+    ylim = c(0,400),
+    col = "gold")
+```
+
+Ahora bien, es necesario realizar la estimación de nuestros parámetros para plantear de manera correcta nuestra prueba de hipótesis. Esta prueba se realizará apartir de la **estimación por máxima verosimilitud (MLE)**.
+
+```{r echo=FALSE}
+fitdist(data$precio_dolar,
+        distr = "lnorm",
+        method = "mle",
+        lower = c(0, 0))
+
+```
+
+De lo anterior podemos observar que nuestras estimaciones de los parámetros fueron de $\mu=3.0145418$ y $\sigma=0.0200558$. Dicho esto, podemos plantear de manera correcta nuestra nuestra hipótesis correspondiente:
+
+$$H_0: Distribución.Lognormal | \mu=3.0145418 \wedge \sigma=0.0200558$$
+$$H_a:Otra.Distribución $$
+
+Planteada nuestra hipótesis realizaremos nuestra prueba *Kolmogrov Smirnov*:
+
+```{r echo=FALSE}
+ks.test(data$precio_dolar, plnorm, mean = 3.0145418, sd = 0.0200558)
+```
+
+Por lo tanto, desarrollamos nuestra hipótesis:
+
+$$valor.p < \alpha$$
+$$0.3837>0.05$$
+Dado que **no rechazamos $H_0$** podemos concluir con un nivel del 95% de confianza que nuestros datos **provienen de una distribución lognormal** con parámetros de $\mu=3.0145418$ y $\sigma=0.020058$.
+
+## Prueba de Hipotesis sobre los Parámetros
+
+Para llevar a cabo estas pruebas únicamente nos enfocaremos en las siguientes variables:
+
+- Precio de la Acción de Apple
+
+- Precio del Dólar
+
+De primer instancia y de acuerdo a nuestros datos, se estipulá que en 251 días la acción de Apple presentó ganancias en 125 días, por otro lado el precio del dólar solo en 115 días. ¿Existe diferencia significativa entre la proporción de las ganancias de ambas cotizaciones? 
+
+Planteando la prueba de hipótesis obtenemos lo siguiente:
+
+$$H_0: Existe.la.misma.proporción.de.ganancias$$
+$$H_a: Existe.diferente.proporcion.de.gananicas$$
+
+La prueba nos arrojó los siguientes resultados:
+
+```{r echo=FALSE}
+
+prop.test(c(125,115), c(251,251), alternative = 'two.sided',
+          conf.level = 0.95)
+
+```
+
+Por lo tanto, desarrollamos nuestra hipótesis:
+
+$$valor.p < \alpha$$
+$$0.4213>0.05$$
+Dado que **no rechazamos $H_0$** podemos concluir con un nivel del 95% de confianza que **existe la misma proporción de ganancias entre ambas cotizaciones**.
+
+# Conclusiones
+
+En el análisis exploratorio de los datos se fue planteando a manera de sospecha a que tipo de distribución se asimilaban los datos, sin embargo, más adelante se pudo afirmar que solo 3 de las 5 variables del modelo final cumplían con las aseveraciones planteadas.
+
+Por otro lado, en el ajuste del modelo se percató que el supuesto de independencia de los residuales no se cumplía, por lo que se tuvo que recurrir a la corrección de autocorrelación por el método de Cochrane Orcutt. Gracias a este procedimiento se estableció un último modelo el cual incluye a las variables de **Volumen Operado, S&P 500, Inflación en Estados Unidos y el Precio del Dólar**, a continuación se muestra la ecuación del mismo:
+  
+$$\hat{y}= 0.0100764X_1 + 0.4704695X_2 + 0.6144166X_3 + 0.5018506X_5 - 49.8332497 $$
+
+Este último modelo presentó un desempeño del 72% y las variables significativas fueron el volumen operado y el S&P 500. De la ecuación anterior se puede responder las incognitas planteadas al principio del estudio.
+
+- Si aumenta el S&P 500, ¿cómo se ve afecta la acción de Apple?
+  - Se puede ver afectada de manera positiva dado a que existe una gran correlación entre ambas variables.
+
+- En un escenario de alta inflación, ¿la acción de Apple sufre decrementos?
+  - Si, dado a que entre ambas variables existe una correlación negativa y a su vez, esto se debe              principalmente a los fuertes movimientos del mercado, cada vez que sube la inflación tiene una repercución negativa en los mercados bursátiles. También los altos niveles de inflación impacta al S&P 500 con niveles hasta del -70% por lo cual nuestra acción de Apple también se ve afectada.
+
+- Con una cotización “cara” del precio del dólar, ¿aumenta el precio de la acción de Apple?
+  - Para esta pregunta podríamos concluir que si, dado que ambas variables siguen una tendencia positiva y     con un nivel de correlación de 35%. Esto no significa que siempre que suba el precio del dólar va a       subir el precio de la acción de Apple, principalmente porque no se demostró que esta variable impacta     de manera significativa en nuestro modelo.
+
+Para finalizar, se hará una prueba para ver el desempeño de nuestro modelo en un caso práctico. Para ello se recolectaron los datos del día 05 de Octubre del 2022 para hacerle una prueba al modelo y ver que tan lejano o cercano se encuentra la estimación al dato real en ese día.
+
+Los precios y cotizaciones de nuestras variables regresoras al día 05 de Octubre de 2022 fueron las siguientes:
+
+```{r echo=FALSE}
+
+datosoct <- read_xlsx("/Volumes/ERICK SSD/Maestría/1 TETRA/METODOS ESTADISTICOS/PIA/Reporte1.xlsx",
+          sheet = 4)
+
+datosoct
+
+```
+
+Aplicando esta información en nuestra ecuación del modelo obtenemos lo siguiente:
+
+$$\hat{y}= 0.0100764(79.47) + 0.4704695(375) + 0.6144166(7.7) + 0.5018506(20.04) - 49.8332497$$
+$$\hat{y}= 0.800771508 + 176.4260625 + 4.73100782 + 10.05708602 - 49.8332497$$
+$$\hat{y}= 142.1816$$
+
+De lo anterior podemos observar que el modelo arrojó que el día 05 de Octubre de 2022 se estima que el precio de la acción de Apple se encuentre en 142.18 dólares. A continuación se muestra una imágen donde podemos ver los niveles de la acción de Apple durante ese día.
+
+
+![Niveles de la Acción de Apple 05-Oct-22](apple.png)
+
+Como conclusión podemos observar en el recuadro verde de la Figura 16 que el precio en la acción de Apple durante el día 05 de Octubre de 2022 se encontró en niveles entre 142.9 y 147.4 dólares. Tomando en cuenta que nuestro modelo estimo 142.18 dólares en ese día podemos concluir que nuestra estimación es muy cercana a la ocurrencia real.
+
+# Bibliografías
+
+Apple Inc. (AAPL). (s/f). Yahoo.com. Recuperado el 5 de diciembre de 2022, de https://finance.yahoo.com/quote/AAPL/history?p=AAPL
+
+Dow Jones Industrial Average (^DJI). (s/f). Yahoo.com. Recuperado el 5 de diciembre de 2022, de https://finance.yahoo.com/quote/%5EDJI/history?p=%5EDJI
+
+Pinchas Cohen/Investing.com, & Picerno, J. (s/f). EU - Inflación - interanual. Investing.com México. Recuperado el 5 de diciembre de 2022, de https://mx.investing.com/economic-calendar/cpi-733
+
+SPDR S&P 500 ETF Trust (SPY). (s/f). Yahoo.com. Recuperado el 5 de diciembre de 2022, de https://finance.yahoo.com/quote/SPY/history?p=SPY
+
+Usd/mxn (mxn=x). (s/f). Yahoo.com. Recuperado el 5 de diciembre de 2022, de https://finance.yahoo.com/quote/MXN%3DX/history?p=MXN%3DX
+
+Wikipedia contributors. (s/f). Método de Cochrane-Orcutt. Wikipedia, The Free Encyclopedia. https://es.wikipedia.org/w/index.php?title=M%C3%A9todo_de_Cochrane-Orcutt&oldid=117736472
+
+
