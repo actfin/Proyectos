@@ -3,6 +3,13 @@
 ### Abstract
 En este proyecto se realizan modelos de predicción para conocer si un cliente será moroso en relación a distintas variables como el monto del préstamo, el plazo, entre otras. Esto nos ayuda a anticipar si algún cliente caerá en incumplimiento de pago y así tomar medidas al respecto.
 
+A continuación anexamos el codigo utilizado en Python y artículo en PDF:
+
+> [Codigo en Pyhton: Analisis de Morosidad](https://github.com/actfin/Proyectos/blob/main/Analisis%20de%20Credito/ARTICULO.ipynb)
+
+> [Artículo: Predicción de la Morosidad de Clientes con Créditos Bancarios Utilizando Aprendizaje Automático](https://github.com/actfin/Proyectos/blob/main/Analisis%20de%20Credito/ANALISIS%20DE%20CREDITO.pdf)
+
+
 Para lograrlo, se utilizarón los siguientes metodos de aprendizaje automático:
 
 * Regresión Logística.
