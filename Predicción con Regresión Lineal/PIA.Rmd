@@ -1,10 +1,6 @@
 ---
 documentclass: book
 classoption: a4paper,oneside
-title: "UNIVERSIDAD AUTÓNOMA DE NUEVO LEÓN | FACULTAD DE CIENCIAS FÍSICO MATEMÁTICAS"
-subtitle: "MAESTRÍA EN CIENCIA DE DATOS | METODOS ESTADÍSTICOS BÁSICOS | MET. ALEJANDRA GUADALUPE CERDA RUIZ"
-author: "ACT. ERICK ADRIÁN GARZA TAMEZ | 1812629"
-date: "San Nicolas de los Garza a 4 de Diciembre de 2022"
 output: pdf_document
 fontzise: 12pt
 geometry: margin = 2.5cm
