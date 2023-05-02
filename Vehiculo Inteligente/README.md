@@ -4,7 +4,7 @@ Este proyecto consiste en la implementación de un vehículo inteligente capaz d
 
 A continuación anexamos el codigo en Python para realizarlo:
 
-> [Codigo Vehículo Inteligente]()
+> [Codigo Vehículo Inteligente](https://github.com/actfin/Proyectos/blob/main/Vehiculo%20Inteligente/Resultados.ipynb)
 
 Para lograrlo, se utilizaron los siguientes métodos de aprendizaje automático:
 
