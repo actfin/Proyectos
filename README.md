@@ -6,5 +6,5 @@ A continuación puedes explorar algunos de los proyectos en los que hemos partic
 
 * [Predicción de Morosidad a través del Machine Learning](https://github.com/actfin/Proyectos/tree/main/Analisis%20de%20Credito)
 
-
+* [Vehículo Inteligente dentro de Planta Industrial](https://github.com/actfin/Proyectos/tree/main/Vehiculo%20Inteligente)
 
